@@ -44,7 +44,7 @@ export class RentalRegionFactory {
     };
 }
 
-export class USRentalFactory extends RentalRegionFactory {
+export class USRentalFactory implements RentalRegion {
     createVehicle(type: VehicleType): Vehicle {
         switch (type) {
             case VehicleType.Car:
@@ -58,7 +58,7 @@ export class USRentalFactory extends RentalRegionFactory {
         }
     }
 }
-export class EURentalFactory extends RentalRegionFactory {
+export class EURentalFactory implements RentalRegion {
     createVehicle(type: VehicleType): Vehicle {
         switch (type) {
             case VehicleType.Car:
@@ -72,7 +72,7 @@ export class EURentalFactory extends RentalRegionFactory {
         }
     }
 }
-export class AsiaRentalFactory extends RentalRegionFactory {
+export class AsiaRentalFactory implements RentalRegion {
     createVehicle(type: VehicleType): Vehicle {
         switch (type) {
             case VehicleType.Car:
@@ -99,6 +99,7 @@ export class Car implements Vehicle {
     }
 
     calculateRentalCost(days: number): number {
+        if(days <= 0) return 0;
         return days * 100; // Example cost calculation for Car
     }
 }
@@ -113,6 +114,7 @@ export class Bike implements Vehicle {
     }
 
     calculateRentalCost(days: number): number {
+        if(days <= 0) return 0;
         return days * 50; // Example cost calculation for Bike
     }
 }
@@ -127,6 +129,7 @@ export class Truck implements Vehicle {
     }
 
     calculateRentalCost(days: number): number {
+        if(days <= 0) return 0;
         return days * 150; // Example cost calculation for Truck
     }
 }
