@@ -6,6 +6,13 @@
 // 5) Create different region according to region type
 // 6) Create a vehicle in a region
 // 7) An error should be thrown if an unknown region type is passed to createRentalRegion.
+// 8) Add tests for handling rental values less than 0
+// 9) Add tests for handling non-integer rental days
+// 10) Add tests for handling extremely large rental days
+// 11) Add tests for handling non-numeric rental days
+// 12) Add tests for handling zero rental days
+// 13) Add tests for handling negative rental days
+// 14) Add tests for handling fractional rental days
 
 import {
   VehicleType,
@@ -89,38 +96,82 @@ describe('Factory Pattern', () => {
     });
   });
   describe('Vehicle methods', () => {
-    it('Car: start, stop, and calculateRentalCost', () => {
-      const region = RentalRegionFactory.createRentalRegion(RentalRegionEnum.US);
-      const car = region.createVehicle(VehicleType.Car);
-      const logSpy = jest.spyOn(console, 'log').mockImplementation();
-      car.start();
-      expect(logSpy).toHaveBeenCalledWith('Car started');
-      car.stop();
-      expect(logSpy).toHaveBeenCalledWith('Car stopped');
-      logSpy.mockRestore();
-      expect(car.calculateRentalCost(2)).toBe(200);
+    const region = RentalRegionFactory.createRentalRegion(RentalRegionEnum.US);
+    const vehicles = [
+      { type: VehicleType.Car, class: Car, startMsg: 'Car started', stopMsg: 'Car stopped', rate: 100 },
+      { type: VehicleType.Bike, class: Bike, startMsg: 'Bike started', stopMsg: 'Bike stopped', rate: 50 },
+      { type: VehicleType.Truck, class: Truck, startMsg: 'Truck started', stopMsg: 'Truck stopped', rate: 150 }
+    ];
+    vehicles.forEach(({ type, class: VehicleClass, startMsg, stopMsg, rate }) => {
+      it(`${VehicleClass.name}: start, stop, and calculateRentalCost`, () => {
+        const vehicle = region.createVehicle(type);
+        const logSpy = jest.spyOn(console, 'log').mockImplementation();
+        vehicle.start();
+        expect(logSpy).toHaveBeenCalledWith(startMsg);
+        vehicle.stop();
+        expect(logSpy).toHaveBeenCalledWith(stopMsg);
+        logSpy.mockRestore();
+        expect(vehicle.calculateRentalCost(2)).toBe(2 * rate);
+      });
     });
-    it('Bike: start, stop, and calculateRentalCost', () => {
-      const region = RentalRegionFactory.createRentalRegion(RentalRegionEnum.US);
-      const bike = region.createVehicle(VehicleType.Bike);
-      const logSpy = jest.spyOn(console, 'log').mockImplementation();
-      bike.start();
-      expect(logSpy).toHaveBeenCalledWith('Bike started');
-      bike.stop();
-      expect(logSpy).toHaveBeenCalledWith('Bike stopped');
-      logSpy.mockRestore();
-      expect(bike.calculateRentalCost(3)).toBe(150);
+
+    // Edge case tests
+    vehicles.forEach(({ type, rate }) => {
+      it(`${type}: rental days less than 0`, () => {
+        const vehicle = region.createVehicle(type);
+        expect(vehicle.calculateRentalCost(-5)).toBe(-5 * rate);
+      });
+      it(`${type}: rental days as non-integer`, () => {
+        const vehicle = region.createVehicle(type);
+        expect(vehicle.calculateRentalCost(2.5)).toBe(2.5 * rate);
+      });
+      it(`${type}: extremely large rental days`, () => {
+        const vehicle = region.createVehicle(type);
+        expect(vehicle.calculateRentalCost(1e6)).toBe(1e6 * rate);
+      });
+      it(`${type}: rental days as string (non-numeric)`, () => {
+        const vehicle = region.createVehicle(type);
+        // @ts-expect-error
+        expect(vehicle.calculateRentalCost('abc')).toBeNaN();
+      });
+      it(`${type}: rental days as zero`, () => {
+        const vehicle = region.createVehicle(type);
+        expect(vehicle.calculateRentalCost(0)).toBe(0);
+      });
+      it(`${type}: rental days as negative`, () => {
+        const vehicle = region.createVehicle(type);
+        expect(vehicle.calculateRentalCost(-1)).toBe(0);
+      });
+      it(`${type}: rental days as fractional`, () => {
+        const vehicle = region.createVehicle(type);
+        expect(vehicle.calculateRentalCost(1.75)).toBe(1.75 * rate);
+      });
     });
-    it('Truck: start, stop, and calculateRentalCost', () => {
-      const region = RentalRegionFactory.createRentalRegion(RentalRegionEnum.US);
-      const truck = region.createVehicle(VehicleType.Truck);
-      const logSpy = jest.spyOn(console, 'log').mockImplementation();
-      truck.start();
-      expect(logSpy).toHaveBeenCalledWith('Truck started');
-      truck.stop();
-      expect(logSpy).toHaveBeenCalledWith('Truck stopped');
-      logSpy.mockRestore();
-      expect(truck.calculateRentalCost(1)).toBe(150);
+    // Test for rental days as non-numeric (null, undefined)
+    vehicles.forEach(({ type }) => {
+      it(`${type}: rental days as null`, () => {
+        const vehicle = region.createVehicle(type);
+        // @ts-expect-error
+        expect(vehicle.calculateRentalCost(null)).toBe(0);
+      });
+      it(`${type}: rental days as undefined`, () => {
+        const vehicle = region.createVehicle(type);
+        // @ts-expect-error
+        expect(vehicle.calculateRentalCost(undefined)).toBeNaN();
+      });
+    });
+    // Test for rental days as array/object
+    vehicles.forEach(({ type }) => {
+      it(`${type}: rental days as array`, () => {
+        const vehicle = region.createVehicle(type);
+        // @ts-expect-error
+        expect(vehicle.calculateRentalCost([1,2])).toBeNaN();
+      });
+      it(`${type}: rental days as object`, () => {
+        const vehicle = region.createVehicle(type);
+        // @ts-expect-error
+        expect(vehicle.calculateRentalCost({days:2})).toBeNaN();
+      });
     });
   });
 });
